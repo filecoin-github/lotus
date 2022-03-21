@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/filecoin-project/lotus/blockstore"
+
 	cbor "github.com/ipfs/go-ipld-cbor"
 
 	"github.com/filecoin-project/lotus/chain/state"
@@ -223,7 +225,7 @@ func (sm *StateManager) CallWithGas(ctx context.Context, msg *types.Message, pri
 		return nil, err
 	}
 
-	buffStore := blockstore.NewBuffered(sm.cs.StateBlockstore())
+	buffStore := blockstore.NewTieredBstore(sm.cs.StateBlockstore(), blockstore.NewMemorySync())
 	vmopt := &vm.VMOpts{
 		StateBase:      stateCid,
 		Epoch:          vmHeight,
