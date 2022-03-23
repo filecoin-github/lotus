@@ -397,7 +397,12 @@ func TestRemoteGetSector(t *testing.T) {
 
 				stat, err := os.Stat(tempFile2.Name())
 				require.NoError(t, err)
-				tempDir := t.TempDir()
+				tempDir, err := ioutil.TempDir("", "TestRemoteGetSector-")
+				require.NoError(t, err)
+
+				defer func() {
+					_ = os.RemoveAll(tempDir)
+				}()
 
 				require.NoError(t, os.Rename(tempFile2.Name(), filepath.Join(tempDir, stat.Name())))
 

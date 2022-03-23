@@ -13,7 +13,6 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/filecoin-project/go-address"
-	"github.com/filecoin-project/go-bitfield"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/big"
 	"github.com/filecoin-project/go-state-types/crypto"
@@ -64,7 +63,7 @@ type SealingAPI interface {
 	StateMinerInfo(context.Context, address.Address, TipSetToken) (miner.MinerInfo, error)
 	StateMinerAvailableBalance(context.Context, address.Address, TipSetToken) (big.Int, error)
 	StateMinerSectorAllocated(context.Context, address.Address, abi.SectorNumber, TipSetToken) (bool, error)
-	StateMinerActiveSectors(context.Context, address.Address, TipSetToken) (bitfield.BitField, error)
+	StateMinerActiveSectors(context.Context, address.Address, TipSetToken) ([]*miner.SectorOnChainInfo, error)
 	StateMarketStorageDeal(context.Context, abi.DealID, TipSetToken) (*api.MarketDeal, error)
 	StateMarketStorageDealProposal(context.Context, abi.DealID, TipSetToken) (market.DealProposal, error)
 	StateNetworkVersion(ctx context.Context, tok TipSetToken) (network.Version, error)
@@ -105,9 +104,10 @@ type Sealing struct {
 	sectorTimers   map[abi.SectorID]*time.Timer
 	pendingPieces  map[cid.Cid]*pendingPiece
 	assignedPieces map[abi.SectorID][]cid.Cid
-	nextDealSector *abi.SectorNumber // used to prevent a race where we could create a new sector more than once
+	creating       *abi.SectorNumber // used to prevent a race where we could create a new sector more than once
 
-	available map[abi.SectorID]struct{}
+	upgradeLk sync.Mutex
+	toUpgrade map[abi.SectorNumber]struct{}
 
 	notifee SectorStateNotifee
 	addrSel AddrSel
@@ -129,27 +129,18 @@ type openSector struct {
 	maybeAccept func(cid.Cid) error // called with inputLk
 }
 
-func (o *openSector) dealFitsInLifetime(dealEnd abi.ChainEpoch, expF expFn) (bool, error) {
+func (o *openSector) dealFitsInLifetime(dealEnd abi.ChainEpoch, expF func(sn abi.SectorNumber) (abi.ChainEpoch, error)) (bool, error) {
 	if !o.ccUpdate {
 		return true, nil
 	}
-	expiration, _, err := expF(o.number)
+	expiration, err := expF(o.number)
 	if err != nil {
 		return false, err
 	}
 	return expiration >= dealEnd, nil
 }
 
-type pieceAcceptResp struct {
-	sn     abi.SectorNumber
-	offset abi.UnpaddedPieceSize
-	err    error
-}
-
 type pendingPiece struct {
-	doneCh chan struct{}
-	resp   *pieceAcceptResp
-
 	size abi.UnpaddedPieceSize
 	deal api.PieceDealInfo
 
@@ -177,8 +168,7 @@ func New(mctx context.Context, api SealingAPI, fc config.MinerFeeConfig, events 
 		sectorTimers:   map[abi.SectorID]*time.Timer{},
 		pendingPieces:  map[cid.Cid]*pendingPiece{},
 		assignedPieces: map[abi.SectorID][]cid.Cid{},
-
-		available: map[abi.SectorID]struct{}{},
+		toUpgrade:      map[abi.SectorNumber]struct{}{},
 
 		notifee: notifee,
 		addrSel: as,

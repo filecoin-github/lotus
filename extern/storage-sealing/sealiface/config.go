@@ -20,8 +20,6 @@ type Config struct {
 
 	MakeNewSectorForDeals bool
 
-	MakeCCSectorsAvailable bool
-
 	WaitDealsDelay time.Duration
 
 	CommittedCapacitySectorLifetime time.Duration

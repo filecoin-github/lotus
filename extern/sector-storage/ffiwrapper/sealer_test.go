@@ -295,7 +295,7 @@ func TestSealAndVerify(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
-	t.Cleanup(func() {
+	cleanup := func() {
 		if t.Failed() {
 			fmt.Printf("not removing %s\n", cdir)
 			return
@@ -303,7 +303,8 @@ func TestSealAndVerify(t *testing.T) {
 		if err := os.RemoveAll(cdir); err != nil {
 			t.Error(err)
 		}
-	})
+	}
+	defer cleanup()
 
 	si := storage.SectorRef{
 		ID:        abi.SectorID{Miner: miner, Number: 1},
@@ -368,7 +369,7 @@ func TestSealPoStNoCommit(t *testing.T) {
 		t.Fatalf("%+v", err)
 	}
 
-	t.Cleanup(func() {
+	cleanup := func() {
 		if t.Failed() {
 			fmt.Printf("not removing %s\n", dir)
 			return
@@ -376,7 +377,8 @@ func TestSealPoStNoCommit(t *testing.T) {
 		if err := os.RemoveAll(dir); err != nil {
 			t.Error(err)
 		}
-	})
+	}
+	defer cleanup()
 
 	si := storage.SectorRef{
 		ID:        abi.SectorID{Miner: miner, Number: 1},
@@ -432,11 +434,13 @@ func TestSealAndVerify3(t *testing.T) {
 		t.Fatalf("%+v", err)
 	}
 
-	t.Cleanup(func() {
+	cleanup := func() {
 		if err := os.RemoveAll(dir); err != nil {
 			t.Error(err)
 		}
-	})
+	}
+
+	defer cleanup()
 
 	var wg sync.WaitGroup
 
@@ -508,7 +512,7 @@ func TestSealAndVerifyAggregate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
-	t.Cleanup(func() {
+	cleanup := func() {
 		if t.Failed() {
 			fmt.Printf("not removing %s\n", cdir)
 			return
@@ -516,7 +520,8 @@ func TestSealAndVerifyAggregate(t *testing.T) {
 		if err := os.RemoveAll(cdir); err != nil {
 			t.Error(err)
 		}
-	})
+	}
+	defer cleanup()
 
 	avi := proof5.AggregateSealVerifyProofAndInfos{
 		Miner:          miner,
@@ -912,7 +917,7 @@ func TestMulticoreSDR(t *testing.T) {
 		t.Fatalf("%+v", err)
 	}
 
-	t.Cleanup(func() {
+	cleanup := func() {
 		if t.Failed() {
 			fmt.Printf("not removing %s\n", dir)
 			return
@@ -920,7 +925,8 @@ func TestMulticoreSDR(t *testing.T) {
 		if err := os.RemoveAll(dir); err != nil {
 			t.Error(err)
 		}
-	})
+	}
+	defer cleanup()
 
 	si := storage.SectorRef{
 		ID:        abi.SectorID{Miner: miner, Number: 1},

@@ -64,7 +64,11 @@ func TestMoveShared(t *testing.T) {
 
 	ctx := context.Background()
 
-	dir := t.TempDir()
+	dir, err := ioutil.TempDir("", "stores-remote-test-")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = os.RemoveAll(dir)
+	})
 
 	openRepo := func(dir string) repo.LockedRepo {
 		r, err := repo.NewFS(dir)
