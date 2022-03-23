@@ -1,6 +1,8 @@
 package splitstore
 
 import (
+	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -9,7 +11,14 @@ import (
 )
 
 func TestCheckpoint(t *testing.T) {
-	dir := t.TempDir()
+	dir, err := ioutil.TempDir("", "checkpoint.*")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() {
+		_ = os.RemoveAll(dir)
+	})
 
 	path := filepath.Join(dir, "checkpoint")
 

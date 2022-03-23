@@ -2,6 +2,8 @@ package splitstore
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -10,7 +12,14 @@ import (
 )
 
 func TestColdSet(t *testing.T) {
-	dir := t.TempDir()
+	dir, err := ioutil.TempDir("", "coldset.*")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() {
+		_ = os.RemoveAll(dir)
+	})
 
 	path := filepath.Join(dir, "coldset")
 

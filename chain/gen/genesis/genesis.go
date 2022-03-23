@@ -491,13 +491,12 @@ func VerifyPreSealedData(ctx context.Context, cs *store.ChainStore, sys vm.Sysca
 		Actors:         filcns.NewActorRegistry(),
 		Syscalls:       mkFakedSigSyscalls(sys),
 		CircSupplyCalc: csc,
-		FilVested:      big.Zero(),
 		NetworkVersion: nv,
-		BaseFee:        big.Zero(),
+		BaseFee:        types.NewInt(0),
 	}
-	vm, err := vm.NewLegacyVM(ctx, &vmopt)
+	vm, err := vm.NewVM(ctx, &vmopt)
 	if err != nil {
-		return cid.Undef, xerrors.Errorf("failed to create NewLegacyVM: %w", err)
+		return cid.Undef, xerrors.Errorf("failed to create NewVM: %w", err)
 	}
 
 	for mi, m := range template.Miners {

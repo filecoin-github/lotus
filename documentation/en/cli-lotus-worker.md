@@ -7,7 +7,7 @@ USAGE:
    lotus-worker [global options] command [command options] [arguments...]
 
 VERSION:
-   1.15.2-dev
+   1.15.0
 
 COMMANDS:
    run         Start lotus worker
@@ -79,7 +79,8 @@ COMMANDS:
    help, h  Shows a list of commands or help for one command
 
 OPTIONS:
-   --help, -h  show help (default: false)
+   --help, -h     show help (default: false)
+   --version, -v  print the version (default: false)
    
 ```
 
@@ -159,7 +160,8 @@ COMMANDS:
    help, h  Shows a list of commands or help for one command
 
 OPTIONS:
-   --help, -h  show help (default: false)
+   --help, -h     show help (default: false)
+   --version, -v  print the version (default: false)
    
 ```
 

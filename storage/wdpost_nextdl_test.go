@@ -1,4 +1,3 @@
-//stm: #unit
 package storage
 
 import (
@@ -23,7 +22,6 @@ func TestNextDeadline(t *testing.T) {
 	require.EqualValues(t, 60, di.Close)
 
 	for i := 1; i < 1+int(miner.WPoStPeriodDeadlines)*2; i++ {
-		//stm: @WDPOST_NEXT_DEADLINE_001
 		di = nextDeadline(di)
 		deadlineIdx = i % int(miner.WPoStPeriodDeadlines)
 		expPeriodStart := int(miner.WPoStProvingPeriod) * (i / int(miner.WPoStPeriodDeadlines))

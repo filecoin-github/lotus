@@ -106,7 +106,7 @@ func (mp *MessagePool) checkMessages(ctx context.Context, msgs []*types.Message,
 	curTs := mp.curTs
 	mp.curTsLk.Unlock()
 
-	epoch := curTs.Height() + 1
+	epoch := curTs.Height()
 
 	var baseFee big.Int
 	if len(curTs.Blocks()) > 0 {

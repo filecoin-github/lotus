@@ -1,4 +1,3 @@
-//stm: #unit
 package state
 
 import (
@@ -19,7 +18,6 @@ import (
 )
 
 func BenchmarkStateTreeSet(b *testing.B) {
-	//stm: @CHAIN_STATETREE_SET_ACTOR_001
 	cst := cbor.NewMemCborStore()
 	st, err := NewStateTree(cst, types.StateTreeVersion1)
 	if err != nil {
@@ -47,7 +45,6 @@ func BenchmarkStateTreeSet(b *testing.B) {
 }
 
 func BenchmarkStateTreeSetFlush(b *testing.B) {
-	//stm: @CHAIN_STATETREE_SET_ACTOR_001
 	cst := cbor.NewMemCborStore()
 	sv, err := VersionForNetwork(build.NewestNetworkVersion)
 	if err != nil {
@@ -83,8 +80,6 @@ func BenchmarkStateTreeSetFlush(b *testing.B) {
 }
 
 func TestResolveCache(t *testing.T) {
-	//stm: @CHAIN_STATETREE_SET_ACTOR_001, @CHAIN_STATETREE_GET_ACTOR_001, @CHAIN_STATETREE_VERSION_FOR_NETWORK_001
-	//stm: @CHAIN_STATETREE_SNAPSHOT_001, @CHAIN_STATETREE_SNAPSHOT_CLEAR_001
 	cst := cbor.NewMemCborStore()
 	sv, err := VersionForNetwork(build.NewestNetworkVersion)
 	if err != nil {
@@ -187,8 +182,6 @@ func TestResolveCache(t *testing.T) {
 }
 
 func BenchmarkStateTree10kGetActor(b *testing.B) {
-	//stm: @CHAIN_STATETREE_SET_ACTOR_001, @CHAIN_STATETREE_GET_ACTOR_001, @CHAIN_STATETREE_VERSION_FOR_NETWORK_001
-	//stm: @CHAIN_STATETREE_FLUSH_001
 	cst := cbor.NewMemCborStore()
 	sv, err := VersionForNetwork(build.NewestNetworkVersion)
 	if err != nil {
@@ -236,7 +229,6 @@ func BenchmarkStateTree10kGetActor(b *testing.B) {
 }
 
 func TestSetCache(t *testing.T) {
-	//stm: @CHAIN_STATETREE_SET_ACTOR_001, @CHAIN_STATETREE_GET_ACTOR_001, @CHAIN_STATETREE_VERSION_FOR_NETWORK_001
 	cst := cbor.NewMemCborStore()
 	sv, err := VersionForNetwork(build.NewestNetworkVersion)
 	if err != nil {
@@ -278,8 +270,6 @@ func TestSetCache(t *testing.T) {
 }
 
 func TestSnapshots(t *testing.T) {
-	//stm: @CHAIN_STATETREE_SET_ACTOR_001, @CHAIN_STATETREE_GET_ACTOR_001, @CHAIN_STATETREE_VERSION_FOR_NETWORK_001
-	//stm: @CHAIN_STATETREE_FLUSH_001, @CHAIN_STATETREE_SNAPSHOT_REVERT_001, CHAIN_STATETREE_SNAPSHOT_CLEAR_001
 	ctx := context.Background()
 	cst := cbor.NewMemCborStore()
 
@@ -370,7 +360,6 @@ func assertNotHas(t *testing.T, st *StateTree, addr address.Address) {
 }
 
 func TestStateTreeConsistency(t *testing.T) {
-	//stm: @CHAIN_STATETREE_SET_ACTOR_001, @CHAIN_STATETREE_VERSION_FOR_NETWORK_001, @CHAIN_STATETREE_FLUSH_001
 	cst := cbor.NewMemCborStore()
 
 	// TODO: ActorUpgrade: this test tests pre actors v2

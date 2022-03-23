@@ -2,11 +2,16 @@
 package repo
 
 import (
+	"io/ioutil"
+	"os"
 	"testing"
 )
 
-func genFsRepo(t *testing.T) *FsRepo {
-	path := t.TempDir()
+func genFsRepo(t *testing.T) (*FsRepo, func()) {
+	path, err := ioutil.TempDir("", "lotus-repo-")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	repo, err := NewFS(path)
 	if err != nil {
@@ -17,15 +22,13 @@ func genFsRepo(t *testing.T) *FsRepo {
 	if err != ErrRepoExists && err != nil {
 		t.Fatal(err)
 	}
-	return repo
+	return repo, func() {
+		_ = os.RemoveAll(path)
+	}
 }
 
 func TestFsBasic(t *testing.T) {
-	//stm: @NODE_FS_REPO_LOCK_001,@NODE_FS_REPO_LOCK_002,@NODE_FS_REPO_UNLOCK_001
-	//stm: @NODE_FS_REPO_SET_API_ENDPOINT_001, @NODE_FS_REPO_GET_API_ENDPOINT_001
-	//stm: @NODE_FS_REPO_GET_CONFIG_001, @NODE_FS_REPO_SET_CONFIG_001
-	//stm: @NODE_FS_REPO_LIST_KEYS_001, @NODE_FS_REPO_PUT_KEY_001
-	//stm: @NODE_FS_REPO_GET_KEY_001, NODE_FS_REPO_DELETE_KEY_001
-	repo := genFsRepo(t)
+	repo, closer := genFsRepo(t)
+	defer closer()
 	basicTest(t, repo)
 }

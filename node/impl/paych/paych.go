@@ -22,26 +22,8 @@ type PaychAPI struct {
 	PaychMgr *paychmgr.Manager
 }
 
-func (a *PaychAPI) PaychGet(ctx context.Context, from, to address.Address, amt types.BigInt, opts api.PaychGetOpts) (*api.ChannelInfo, error) {
-	ch, mcid, err := a.PaychMgr.GetPaych(ctx, from, to, amt, paychmgr.GetOpts{
-		Reserve:  true,
-		OffChain: opts.OffChain,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &api.ChannelInfo{
-		Channel:      ch,
-		WaitSentinel: mcid,
-	}, nil
-}
-
-func (a *PaychAPI) PaychFund(ctx context.Context, from, to address.Address, amt types.BigInt) (*api.ChannelInfo, error) {
-	ch, mcid, err := a.PaychMgr.GetPaych(ctx, from, to, amt, paychmgr.GetOpts{
-		Reserve:  false,
-		OffChain: false,
-	})
+func (a *PaychAPI) PaychGet(ctx context.Context, from, to address.Address, amt types.BigInt) (*api.ChannelInfo, error) {
+	ch, mcid, err := a.PaychMgr.GetPaych(ctx, from, to, amt)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +55,7 @@ func (a *PaychAPI) PaychNewPayment(ctx context.Context, from, to address.Address
 
 	// TODO: Fix free fund tracking in PaychGet
 	// TODO: validate voucher spec before locking funds
-	ch, err := a.PaychGet(ctx, from, to, amount, api.PaychGetOpts{OffChain: false})
+	ch, err := a.PaychGet(ctx, from, to, amount)
 	if err != nil {
 		return nil, err
 	}

@@ -122,7 +122,7 @@ func (bs *gasChargingBlocks) Put(ctx context.Context, blk block.Block) error {
 	return nil
 }
 
-func (vm *LegacyVM) makeRuntime(ctx context.Context, msg *types.Message, parent *Runtime) *Runtime {
+func (vm *VM) makeRuntime(ctx context.Context, msg *types.Message, parent *Runtime) *Runtime {
 	rt := &Runtime{
 		ctx:         ctx,
 		vm:          vm,
@@ -188,7 +188,7 @@ func (vm *LegacyVM) makeRuntime(ctx context.Context, msg *types.Message, parent 
 }
 
 type UnsafeVM struct {
-	VM *LegacyVM
+	VM *VM
 }
 
 func (vm *UnsafeVM) MakeRuntime(ctx context.Context, msg *types.Message) *Runtime {
@@ -201,9 +201,7 @@ type (
 	LookbackStateGetter  func(context.Context, abi.ChainEpoch) (*state.StateTree, error)
 )
 
-var _ Interface = (*LegacyVM)(nil)
-
-type LegacyVM struct {
+type VM struct {
 	cstate         *state.StateTree
 	cst            *cbor.BasicIpldStore
 	buf            *blockstore.BufferedBlockstore
@@ -227,14 +225,12 @@ type VMOpts struct {
 	Actors         *ActorRegistry
 	Syscalls       SyscallBuilder
 	CircSupplyCalc CircSupplyCalculator
-	// Amount of FIL vested from genesis actors.
-	FilVested      abi.TokenAmount
 	NetworkVersion network.Version
 	BaseFee        abi.TokenAmount
 	LookbackState  LookbackStateGetter
 }
 
-func NewLegacyVM(ctx context.Context, opts *VMOpts) (*LegacyVM, error) {
+func NewVM(ctx context.Context, opts *VMOpts) (*VM, error) {
 	buf := blockstore.NewBuffered(opts.Bstore)
 	cst := cbor.NewCborStore(buf)
 	state, err := state.LoadStateTree(cst, opts.StateBase)
@@ -247,7 +243,7 @@ func NewLegacyVM(ctx context.Context, opts *VMOpts) (*LegacyVM, error) {
 		return nil, err
 	}
 
-	return &LegacyVM{
+	return &VM{
 		cstate:         state,
 		cst:            cst,
 		buf:            buf,
@@ -276,7 +272,7 @@ type ApplyRet struct {
 	GasCosts       *GasOutputs
 }
 
-func (vm *LegacyVM) send(ctx context.Context, msg *types.Message, parent *Runtime,
+func (vm *VM) send(ctx context.Context, msg *types.Message, parent *Runtime,
 	gasCharge *GasCharge, start time.Time) ([]byte, aerrors.ActorError, *Runtime) {
 	defer atomic.AddUint64(&StatSends, 1)
 
@@ -395,7 +391,7 @@ func checkMessage(msg *types.Message) error {
 	return nil
 }
 
-func (vm *LegacyVM) ApplyImplicitMessage(ctx context.Context, msg *types.Message) (*ApplyRet, error) {
+func (vm *VM) ApplyImplicitMessage(ctx context.Context, msg *types.Message) (*ApplyRet, error) {
 	start := build.Clock.Now()
 	defer atomic.AddUint64(&StatApplied, 1)
 	ret, actorErr, rt := vm.send(ctx, msg, nil, nil, start)
@@ -413,7 +409,7 @@ func (vm *LegacyVM) ApplyImplicitMessage(ctx context.Context, msg *types.Message
 	}, actorErr
 }
 
-func (vm *LegacyVM) ApplyMessage(ctx context.Context, cmsg types.ChainMsg) (*ApplyRet, error) {
+func (vm *VM) ApplyMessage(ctx context.Context, cmsg types.ChainMsg) (*ApplyRet, error) {
 	start := build.Clock.Now()
 	ctx, span := trace.StartSpan(ctx, "vm.ApplyMessage")
 	defer span.End()
@@ -620,7 +616,7 @@ func (vm *LegacyVM) ApplyMessage(ctx context.Context, cmsg types.ChainMsg) (*App
 	}, nil
 }
 
-func (vm *LegacyVM) ShouldBurn(ctx context.Context, st *state.StateTree, msg *types.Message, errcode exitcode.ExitCode) (bool, error) {
+func (vm *VM) ShouldBurn(ctx context.Context, st *state.StateTree, msg *types.Message, errcode exitcode.ExitCode) (bool, error) {
 	if vm.networkVersion <= network.Version12 {
 		// Check to see if we should burn funds. We avoid burning on successful
 		// window post. This won't catch _indirect_ window post calls, but this
@@ -650,7 +646,7 @@ func (vm *LegacyVM) ShouldBurn(ctx context.Context, st *state.StateTree, msg *ty
 
 type vmFlushKey struct{}
 
-func (vm *LegacyVM) Flush(ctx context.Context) (cid.Cid, error) {
+func (vm *VM) Flush(ctx context.Context) (cid.Cid, error) {
 	_, span := trace.StartSpan(ctx, "vm.Flush")
 	defer span.End()
 
@@ -669,9 +665,9 @@ func (vm *LegacyVM) Flush(ctx context.Context) (cid.Cid, error) {
 	return root, nil
 }
 
-// Get the buffered blockstore associated with the LegacyVM. This includes any temporary blocks produced
-// during this LegacyVM's execution.
-func (vm *LegacyVM) ActorStore(ctx context.Context) adt.Store {
+// Get the buffered blockstore associated with the VM. This includes any temporary blocks produced
+// during this VM's execution.
+func (vm *VM) ActorStore(ctx context.Context) adt.Store {
 	return adt.WrapStore(ctx, vm.cst)
 }
 
@@ -824,11 +820,11 @@ func copyRec(ctx context.Context, from, to blockstore.Blockstore, root cid.Cid, 
 	return nil
 }
 
-func (vm *LegacyVM) StateTree() types.StateTree {
+func (vm *VM) StateTree() types.StateTree {
 	return vm.cstate
 }
 
-func (vm *LegacyVM) Invoke(act *types.Actor, rt *Runtime, method abi.MethodNum, params []byte) ([]byte, aerrors.ActorError) {
+func (vm *VM) Invoke(act *types.Actor, rt *Runtime, method abi.MethodNum, params []byte) ([]byte, aerrors.ActorError) {
 	ctx, span := trace.StartSpan(rt.ctx, "vm.Invoke")
 	defer span.End()
 	if span.IsRecordingEvents() {
@@ -851,11 +847,11 @@ func (vm *LegacyVM) Invoke(act *types.Actor, rt *Runtime, method abi.MethodNum, 
 	return ret, nil
 }
 
-func (vm *LegacyVM) SetInvoker(i *ActorRegistry) {
+func (vm *VM) SetInvoker(i *ActorRegistry) {
 	vm.areg = i
 }
 
-func (vm *LegacyVM) GetCircSupply(ctx context.Context) (abi.TokenAmount, error) {
+func (vm *VM) GetCircSupply(ctx context.Context) (abi.TokenAmount, error) {
 	// Before v15, this was recalculated on each invocation as the state tree was mutated
 	if vm.networkVersion <= network.Version14 {
 		return vm.circSupplyCalc(ctx, vm.blockHeight, vm.cstate)
@@ -864,14 +860,14 @@ func (vm *LegacyVM) GetCircSupply(ctx context.Context) (abi.TokenAmount, error) 
 	return vm.baseCircSupply, nil
 }
 
-func (vm *LegacyVM) incrementNonce(addr address.Address) error {
+func (vm *VM) incrementNonce(addr address.Address) error {
 	return vm.cstate.MutateActor(addr, func(a *types.Actor) error {
 		a.Nonce++
 		return nil
 	})
 }
 
-func (vm *LegacyVM) transfer(from, to address.Address, amt types.BigInt, networkVersion network.Version) aerrors.ActorError {
+func (vm *VM) transfer(from, to address.Address, amt types.BigInt, networkVersion network.Version) aerrors.ActorError {
 	var f *types.Actor
 	var fromID, toID address.Address
 	var err error
@@ -959,7 +955,7 @@ func (vm *LegacyVM) transfer(from, to address.Address, amt types.BigInt, network
 	return nil
 }
 
-func (vm *LegacyVM) transferToGasHolder(addr address.Address, gasHolder *types.Actor, amt types.BigInt) error {
+func (vm *VM) transferToGasHolder(addr address.Address, gasHolder *types.Actor, amt types.BigInt) error {
 	if amt.LessThan(types.NewInt(0)) {
 		return xerrors.Errorf("attempted to transfer negative value to gas holder")
 	}
@@ -973,7 +969,7 @@ func (vm *LegacyVM) transferToGasHolder(addr address.Address, gasHolder *types.A
 	})
 }
 
-func (vm *LegacyVM) transferFromGasHolder(addr address.Address, gasHolder *types.Actor, amt types.BigInt) error {
+func (vm *VM) transferFromGasHolder(addr address.Address, gasHolder *types.Actor, amt types.BigInt) error {
 	if amt.LessThan(types.NewInt(0)) {
 		return xerrors.Errorf("attempted to transfer negative value from gas holder")
 	}

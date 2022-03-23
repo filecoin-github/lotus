@@ -1,4 +1,3 @@
-//stm: #unit
 package market
 
 import (
@@ -23,7 +22,6 @@ import (
 
 // TestFundManagerBasic verifies that the basic fund manager operations work
 func TestFundManagerBasic(t *testing.T) {
-	//stm: @MARKET_RESERVE_FUNDS_001, @MARKET_RELEASE_FUNDS_001, @MARKET_WITHDRAW_FUNDS_001
 	s := setup(t)
 	defer s.fm.Stop()
 
@@ -108,7 +106,6 @@ func TestFundManagerBasic(t *testing.T) {
 
 // TestFundManagerParallel verifies that operations can be run in parallel
 func TestFundManagerParallel(t *testing.T) {
-	//stm: @MARKET_RESERVE_FUNDS_001, @MARKET_RELEASE_FUNDS_001, @MARKET_WITHDRAW_FUNDS_001
 	s := setup(t)
 	defer s.fm.Stop()
 
@@ -200,7 +197,6 @@ func TestFundManagerParallel(t *testing.T) {
 
 // TestFundManagerReserveByWallet verifies that reserve requests are grouped by wallet
 func TestFundManagerReserveByWallet(t *testing.T) {
-	//stm: @MARKET_RESERVE_FUNDS_001
 	s := setup(t)
 	defer s.fm.Stop()
 
@@ -294,7 +290,6 @@ func TestFundManagerReserveByWallet(t *testing.T) {
 // TestFundManagerWithdrawal verifies that as many withdraw operations as
 // possible are processed
 func TestFundManagerWithdrawalLimit(t *testing.T) {
-	//stm: @MARKET_RESERVE_FUNDS_001, @MARKET_RELEASE_FUNDS_001, @MARKET_WITHDRAW_FUNDS_001
 	s := setup(t)
 	defer s.fm.Stop()
 
@@ -389,7 +384,6 @@ func TestFundManagerWithdrawalLimit(t *testing.T) {
 
 // TestFundManagerWithdrawByWallet verifies that withdraw requests are grouped by wallet
 func TestFundManagerWithdrawByWallet(t *testing.T) {
-	//stm: @MARKET_RESERVE_FUNDS_001, @MARKET_RELEASE_FUNDS_001, @MARKET_WITHDRAW_FUNDS_001
 	s := setup(t)
 	defer s.fm.Stop()
 
@@ -499,7 +493,6 @@ func TestFundManagerWithdrawByWallet(t *testing.T) {
 // TestFundManagerRestart verifies that waiting for incomplete requests resumes
 // on restart
 func TestFundManagerRestart(t *testing.T) {
-	//stm: @MARKET_RESERVE_FUNDS_001
 	s := setup(t)
 	defer s.fm.Stop()
 
@@ -566,7 +559,6 @@ func TestFundManagerRestart(t *testing.T) {
 // 3. Deal B completes, reducing addr1 by 7:      reserved       12    available 12 ->  5
 // 4. Deal A releases 5 from addr1:               reserved 12 ->  7    available        5
 func TestFundManagerReleaseAfterPublish(t *testing.T) {
-	//stm: @MARKET_RESERVE_FUNDS_001, @MARKET_RELEASE_FUNDS_001
 	s := setup(t)
 	defer s.fm.Stop()
 

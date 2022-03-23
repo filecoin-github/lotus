@@ -12,7 +12,6 @@ import (
 )
 
 func TestDecodeNothing(t *testing.T) {
-	//stm: @NODE_CONFIG_LOAD_FILE_002
 	assert := assert.New(t)
 
 	{
@@ -31,7 +30,6 @@ func TestDecodeNothing(t *testing.T) {
 }
 
 func TestParitalConfig(t *testing.T) {
-	//stm: @NODE_CONFIG_LOAD_FILE_003
 	assert := assert.New(t)
 	cfgString := ` 
 		[API]

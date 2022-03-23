@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	lapi "github.com/filecoin-project/lotus/api"
+	"github.com/filecoin-project/lotus/api"
 
 	"github.com/filecoin-project/lotus/paychmgr"
 
@@ -39,14 +39,11 @@ var paychAddFundsCmd = &cli.Command{
 	Usage:     "Add funds to the payment channel between fromAddress and toAddress. Creates the payment channel if it doesn't already exist.",
 	ArgsUsage: "[fromAddress toAddress amount]",
 	Flags: []cli.Flag{
+
 		&cli.BoolFlag{
 			Name:  "restart-retrievals",
 			Usage: "restart stalled retrieval deals on this payment channel",
 			Value: true,
-		},
-		&cli.BoolFlag{
-			Name:  "reserve",
-			Usage: "mark funds as reserved",
 		},
 	},
 	Action: func(cctx *cli.Context) error {
@@ -69,7 +66,7 @@ var paychAddFundsCmd = &cli.Command{
 			return ShowHelp(cctx, fmt.Errorf("parsing amount failed: %s", err))
 		}
 
-		api, closer, err := GetFullNodeAPIV1(cctx)
+		api, closer, err := GetFullNodeAPI(cctx)
 		if err != nil {
 			return err
 		}
@@ -79,14 +76,7 @@ var paychAddFundsCmd = &cli.Command{
 
 		// Send a message to chain to create channel / add funds to existing
 		// channel
-		var info *lapi.ChannelInfo
-		if cctx.Bool("reserve") {
-			info, err = api.PaychGet(ctx, from, to, types.BigInt(amt), lapi.PaychGetOpts{
-				OffChain: false,
-			})
-		} else {
-			info, err = api.PaychFund(ctx, from, to, types.BigInt(amt))
-		}
+		info, err := api.PaychGet(ctx, from, to, types.BigInt(amt))
 		if err != nil {
 			return err
 		}
@@ -173,13 +163,13 @@ var paychStatusCmd = &cli.Command{
 	},
 }
 
-func paychStatus(writer io.Writer, avail *lapi.ChannelAvailableFunds) {
+func paychStatus(writer io.Writer, avail *api.ChannelAvailableFunds) {
 	if avail.Channel == nil {
 		if avail.PendingWaitSentinel != nil {
 			fmt.Fprint(writer, "Creating channel\n")
 			fmt.Fprintf(writer, "  From:          %s\n", avail.From)
 			fmt.Fprintf(writer, "  To:            %s\n", avail.To)
-			fmt.Fprintf(writer, "  Pending Amt:   %s\n", types.FIL(avail.PendingAmt))
+			fmt.Fprintf(writer, "  Pending Amt:   %d\n", avail.PendingAmt)
 			fmt.Fprintf(writer, "  Wait Sentinel: %s\n", avail.PendingWaitSentinel)
 			return
 		}
@@ -199,12 +189,10 @@ func paychStatus(writer io.Writer, avail *lapi.ChannelAvailableFunds) {
 		{"Channel", avail.Channel.String()},
 		{"From", avail.From.String()},
 		{"To", avail.To.String()},
-		{"Confirmed Amt", fmt.Sprintf("%s", types.FIL(avail.ConfirmedAmt))},
-		{"Available Amt", fmt.Sprintf("%s", types.FIL(avail.NonReservedAmt))},
-		{"Voucher Redeemed Amt", fmt.Sprintf("%s", types.FIL(avail.VoucherReedeemedAmt))},
-		{"Pending Amt", fmt.Sprintf("%s", types.FIL(avail.PendingAmt))},
-		{"Pending Available Amt", fmt.Sprintf("%s", types.FIL(avail.PendingAvailableAmt))},
-		{"Queued Amt", fmt.Sprintf("%s", types.FIL(avail.QueuedAmt))},
+		{"Confirmed Amt", fmt.Sprintf("%d", avail.ConfirmedAmt)},
+		{"Pending Amt", fmt.Sprintf("%d", avail.PendingAmt)},
+		{"Queued Amt", fmt.Sprintf("%d", avail.QueuedAmt)},
+		{"Voucher Redeemed Amt", fmt.Sprintf("%d", avail.VoucherReedeemedAmt)},
 	}
 	if avail.PendingWaitSentinel != nil {
 		nameValues = append(nameValues, []string{
@@ -588,7 +576,7 @@ func outputVoucher(w io.Writer, v *paych.SignedVoucher, export bool) error {
 		}
 	}
 
-	fmt.Fprintf(w, "Lane %d, Nonce %d: %s", v.Lane, v.Nonce, types.FIL(v.Amount))
+	fmt.Fprintf(w, "Lane %d, Nonce %d: %s", v.Lane, v.Nonce, v.Amount.String())
 	if export {
 		fmt.Fprintf(w, "; %s", enc)
 	}

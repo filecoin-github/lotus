@@ -1,4 +1,3 @@
-//stm: #unit
 package store_test
 
 import (
@@ -29,8 +28,6 @@ func init() {
 }
 
 func BenchmarkGetRandomness(b *testing.B) {
-	//stm: @CHAIN_GEN_NEXT_TIPSET_001
-	//stm: @CHAIN_STATE_GET_RANDOMNESS_FROM_TICKETS_001
 	cg, err := gen.NewGenerator()
 	if err != nil {
 		b.Fatal(err)
@@ -88,8 +85,6 @@ func BenchmarkGetRandomness(b *testing.B) {
 }
 
 func TestChainExportImport(t *testing.T) {
-	//stm: @CHAIN_GEN_NEXT_TIPSET_001
-	//stm: @CHAIN_STORE_IMPORT_001
 	cg, err := gen.NewGenerator()
 	if err != nil {
 		t.Fatal(err)
@@ -125,9 +120,6 @@ func TestChainExportImport(t *testing.T) {
 }
 
 func TestChainExportImportFull(t *testing.T) {
-	//stm: @CHAIN_GEN_NEXT_TIPSET_001
-	//stm: @CHAIN_STORE_IMPORT_001, @CHAIN_STORE_EXPORT_001, @CHAIN_STORE_SET_HEAD_001
-	//stm: @CHAIN_STORE_GET_TIPSET_BY_HEIGHT_001
 	cg, err := gen.NewGenerator()
 	if err != nil {
 		t.Fatal(err)

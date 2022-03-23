@@ -1,4 +1,3 @@
-//stm: #unit
 package types
 
 import (
@@ -52,7 +51,6 @@ func testBlockHeader(t testing.TB) *BlockHeader {
 }
 
 func TestBlockHeaderSerialization(t *testing.T) {
-	//stm: @CHAIN_TYPES_BLOCK_HEADER_FROM_CBOR_001, @CHAIN_TYPES_BLOCK_HEADER_TO_CBOR_001
 	bh := testBlockHeader(t)
 
 	buf := new(bytes.Buffer)
@@ -73,7 +71,6 @@ func TestBlockHeaderSerialization(t *testing.T) {
 }
 
 func TestInteropBH(t *testing.T) {
-	//stm: @OTHER_IMPLEMENTATION_BLOCK_INTEROP_001
 	newAddr, err := address.NewSecp256k1Address([]byte("address0"))
 
 	if err != nil {

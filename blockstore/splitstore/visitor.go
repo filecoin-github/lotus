@@ -26,10 +26,6 @@ type tmpVisitor struct {
 var _ ObjectVisitor = (*tmpVisitor)(nil)
 
 func (v *tmpVisitor) Visit(c cid.Cid) (bool, error) {
-	if isUnitaryObject(c) {
-		return false, nil
-	}
-
 	return v.set.Visit(c), nil
 }
 
@@ -49,10 +45,6 @@ func newConcurrentVisitor() *concurrentVisitor {
 }
 
 func (v *concurrentVisitor) Visit(c cid.Cid) (bool, error) {
-	if isUnitaryObject(c) {
-		return false, nil
-	}
-
 	v.mx.Lock()
 	defer v.mx.Unlock()
 

@@ -358,13 +358,7 @@ The minimum value is 518400 (6 months).`,
 		&CidBaseFlag,
 	},
 	Action: func(cctx *cli.Context) error {
-
-		expectedArgsMsg := "expected 4 args: dataCid, miner, price, duration"
-
 		if !cctx.Args().Present() {
-			if cctx.Bool("manual-stateless-deal") {
-				return xerrors.New("--manual-stateless-deal can not be combined with interactive deal mode: you must specify the " + expectedArgsMsg)
-			}
 			return interactiveDeal(cctx)
 		}
 
@@ -377,7 +371,7 @@ The minimum value is 518400 (6 months).`,
 		afmt := NewAppFmt(cctx.App)
 
 		if cctx.NArg() != 4 {
-			return xerrors.New(expectedArgsMsg)
+			return xerrors.New("expected 4 args: dataCid, miner, price, duration")
 		}
 
 		// [data, miner, price, dur]
@@ -673,8 +667,6 @@ uiLoop:
 
 			state = "miner"
 		case "miner":
-			maddrs = maddrs[:0]
-			ask = ask[:0]
 			afmt.Print("Miner Addresses (f0.. f0..), none to find: ")
 
 			_maddrsStr, _, err := rl.ReadLine()
@@ -810,8 +802,7 @@ uiLoop:
 
 			dealCount, err = strconv.ParseInt(string(dealcStr), 10, 64)
 			if err != nil {
-				printErr(xerrors.Errorf("reading deal count: invalid number"))
-				continue
+				return err
 			}
 
 			color.Blue(".. Picking miners")
@@ -868,13 +859,12 @@ uiLoop:
 
 				a, err := api.ClientQueryAsk(ctx, *mi.PeerId, maddr)
 				if err != nil {
-					printErr(xerrors.Errorf("failed to query ask for miner %s: %w", maddr.String(), err))
+					printErr(xerrors.Errorf("failed to query ask: %w", err))
 					state = "miner"
 					continue uiLoop
 				}
 
 				ask = append(ask, *a)
-
 			}
 
 			// TODO: run more validation
@@ -1913,9 +1903,8 @@ type deal struct {
 }
 
 var clientGetDealCmd = &cli.Command{
-	Name:      "get-deal",
-	Usage:     "Print detailed deal information",
-	ArgsUsage: "[proposalCID]",
+	Name:  "get-deal",
+	Usage: "Print detailed deal information",
 	Action: func(cctx *cli.Context) error {
 		if !cctx.Args().Present() {
 			return cli.ShowCommandHelp(cctx, cctx.Command.Name)

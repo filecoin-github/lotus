@@ -79,7 +79,11 @@ func (m *Miner) MarkForUpgrade(ctx context.Context, id abi.SectorNumber, snap bo
 	if snap {
 		return m.sealing.MarkForSnapUpgrade(ctx, id)
 	}
-	return xerrors.Errorf("Old CC upgrade deprecated, use snap deals CC upgrade")
+	return m.sealing.MarkForUpgrade(ctx, id)
+}
+
+func (m *Miner) IsMarkedForUpgrade(id abi.SectorNumber) bool {
+	return m.sealing.IsMarkedForUpgrade(id)
 }
 
 func (m *Miner) SectorAbortUpgrade(sectorNum abi.SectorNumber) error {
@@ -143,7 +147,7 @@ func (m *Miner) SectorsStatus(ctx context.Context, sid abi.SectorNumber, showOnC
 		PreCommitMsg: info.PreCommitMessage,
 		CommitMsg:    info.CommitMessage,
 		Retries:      info.InvalidProofs,
-		ToUpgrade:    false,
+		ToUpgrade:    m.IsMarkedForUpgrade(sid),
 
 		LastErr: info.LastErr,
 		Log:     log,

@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -68,8 +67,6 @@ var ChainHeadCmd = &cli.Command{
 	Name:  "head",
 	Usage: "Print chain head",
 	Action: func(cctx *cli.Context) error {
-		afmt := NewAppFmt(cctx.App)
-
 		api, closer, err := GetFullNodeAPI(cctx)
 		if err != nil {
 			return err
@@ -83,7 +80,7 @@ var ChainHeadCmd = &cli.Command{
 		}
 
 		for _, c := range head.Cids() {
-			afmt.Println(c)
+			fmt.Println(c)
 		}
 		return nil
 	},
@@ -100,8 +97,6 @@ var ChainGetBlock = &cli.Command{
 		},
 	},
 	Action: func(cctx *cli.Context) error {
-		afmt := NewAppFmt(cctx.App)
-
 		api, closer, err := GetFullNodeAPI(cctx)
 		if err != nil {
 			return err
@@ -129,7 +124,7 @@ var ChainGetBlock = &cli.Command{
 				return err
 			}
 
-			afmt.Println(string(out))
+			fmt.Println(string(out))
 			return nil
 		}
 
@@ -168,8 +163,9 @@ var ChainGetBlock = &cli.Command{
 			return err
 		}
 
-		afmt.Println(string(out))
+		fmt.Println(string(out))
 		return nil
+
 	},
 }
 
@@ -186,8 +182,6 @@ var ChainReadObjCmd = &cli.Command{
 	Usage:     "Read the raw bytes of an object",
 	ArgsUsage: "[objectCid]",
 	Action: func(cctx *cli.Context) error {
-		afmt := NewAppFmt(cctx.App)
-
 		api, closer, err := GetFullNodeAPI(cctx)
 		if err != nil {
 			return err
@@ -205,7 +199,7 @@ var ChainReadObjCmd = &cli.Command{
 			return err
 		}
 
-		afmt.Printf("%x\n", obj)
+		fmt.Printf("%x\n", obj)
 		return nil
 	},
 }
@@ -221,8 +215,6 @@ var ChainDeleteObjCmd = &cli.Command{
 		},
 	},
 	Action: func(cctx *cli.Context) error {
-		afmt := NewAppFmt(cctx.App)
-
 		api, closer, err := GetFullNodeAPI(cctx)
 		if err != nil {
 			return err
@@ -244,7 +236,7 @@ var ChainDeleteObjCmd = &cli.Command{
 			return err
 		}
 
-		afmt.Printf("Obj %s deleted\n", c.String())
+		fmt.Printf("Obj %s deleted\n", c.String())
 		return nil
 	},
 }
@@ -265,7 +257,6 @@ var ChainStatObjCmd = &cli.Command{
 		},
 	},
 	Action: func(cctx *cli.Context) error {
-		afmt := NewAppFmt(cctx.App)
 		api, closer, err := GetFullNodeAPI(cctx)
 		if err != nil {
 			return err
@@ -291,8 +282,8 @@ var ChainStatObjCmd = &cli.Command{
 			return err
 		}
 
-		afmt.Printf("Links: %d\n", stats.Links)
-		afmt.Printf("Size: %s (%d)\n", types.SizeStr(types.NewInt(stats.Size)), stats.Size)
+		fmt.Printf("Links: %d\n", stats.Links)
+		fmt.Printf("Size: %s (%d)\n", types.SizeStr(types.NewInt(stats.Size)), stats.Size)
 		return nil
 	},
 }
@@ -302,8 +293,6 @@ var ChainGetMsgCmd = &cli.Command{
 	Usage:     "Get and print a message by its cid",
 	ArgsUsage: "[messageCid]",
 	Action: func(cctx *cli.Context) error {
-		afmt := NewAppFmt(cctx.App)
-
 		if !cctx.Args().Present() {
 			return fmt.Errorf("must pass a cid of a message to get")
 		}
@@ -342,7 +331,7 @@ var ChainGetMsgCmd = &cli.Command{
 			return err
 		}
 
-		afmt.Println(string(enc))
+		fmt.Println(string(enc))
 		return nil
 	},
 }
@@ -417,7 +406,6 @@ var ChainInspectUsage = &cli.Command{
 		},
 	},
 	Action: func(cctx *cli.Context) error {
-		afmt := NewAppFmt(cctx.App)
 		api, closer, err := GetFullNodeAPI(cctx)
 		if err != nil {
 			return err
@@ -519,23 +507,23 @@ var ChainInspectUsage = &cli.Command{
 
 		numRes := cctx.Int("num-results")
 
-		afmt.Printf("Total Gas Limit: %d\n", sum)
-		afmt.Printf("By Sender:\n")
+		fmt.Printf("Total Gas Limit: %d\n", sum)
+		fmt.Printf("By Sender:\n")
 		for i := 0; i < numRes && i < len(senderVals); i++ {
 			sv := senderVals[i]
-			afmt.Printf("%s\t%0.2f%%\t(total: %d, count: %d)\n", sv.Key, (100*float64(sv.Gas))/float64(sum), sv.Gas, bySenderC[sv.Key])
+			fmt.Printf("%s\t%0.2f%%\t(total: %d, count: %d)\n", sv.Key, (100*float64(sv.Gas))/float64(sum), sv.Gas, bySenderC[sv.Key])
 		}
-		afmt.Println()
-		afmt.Printf("By Receiver:\n")
+		fmt.Println()
+		fmt.Printf("By Receiver:\n")
 		for i := 0; i < numRes && i < len(destVals); i++ {
 			sv := destVals[i]
-			afmt.Printf("%s\t%0.2f%%\t(total: %d, count: %d)\n", sv.Key, (100*float64(sv.Gas))/float64(sum), sv.Gas, byDestC[sv.Key])
+			fmt.Printf("%s\t%0.2f%%\t(total: %d, count: %d)\n", sv.Key, (100*float64(sv.Gas))/float64(sum), sv.Gas, byDestC[sv.Key])
 		}
-		afmt.Println()
-		afmt.Printf("By Method:\n")
+		fmt.Println()
+		fmt.Printf("By Method:\n")
 		for i := 0; i < numRes && i < len(methodVals); i++ {
 			sv := methodVals[i]
-			afmt.Printf("%s\t%0.2f%%\t(total: %d, count: %d)\n", sv.Key, (100*float64(sv.Gas))/float64(sum), sv.Gas, byMethodC[sv.Key])
+			fmt.Printf("%s\t%0.2f%%\t(total: %d, count: %d)\n", sv.Key, (100*float64(sv.Gas))/float64(sum), sv.Gas, byMethodC[sv.Key])
 		}
 
 		return nil
@@ -560,7 +548,6 @@ var ChainListCmd = &cli.Command{
 		},
 	},
 	Action: func(cctx *cli.Context) error {
-		afmt := NewAppFmt(cctx.App)
 		api, closer, err := GetFullNodeAPI(cctx)
 		if err != nil {
 			return err
@@ -608,7 +595,7 @@ var ChainListCmd = &cli.Command{
 			tss = otss
 			for i, ts := range tss {
 				pbf := ts.Blocks()[0].ParentBaseFee
-				afmt.Printf("%d: %d blocks (baseFee: %s -> maxFee: %s)\n", ts.Height(), len(ts.Blocks()), ts.Blocks()[0].ParentBaseFee, types.FIL(types.BigMul(pbf, types.NewInt(uint64(build.BlockGasLimit)))))
+				fmt.Printf("%d: %d blocks (baseFee: %s -> maxFee: %s)\n", ts.Height(), len(ts.Blocks()), ts.Blocks()[0].ParentBaseFee, types.FIL(types.BigMul(pbf, types.NewInt(uint64(build.BlockGasLimit)))))
 
 				for _, b := range ts.Blocks() {
 					msgs, err := api.ChainGetBlockMessages(ctx, b.Cid())
@@ -634,7 +621,7 @@ var ChainListCmd = &cli.Command{
 						avgpremium = big.Div(psum, big.NewInt(int64(lenmsgs)))
 					}
 
-					afmt.Printf("\t%s: \t%d msgs, gasLimit: %d / %d (%0.2f%%), avgPremium: %s\n", b.Miner, len(msgs.BlsMessages)+len(msgs.SecpkMessages), limitSum, build.BlockGasLimit, 100*float64(limitSum)/float64(build.BlockGasLimit), avgpremium)
+					fmt.Printf("\t%s: \t%d msgs, gasLimit: %d / %d (%0.2f%%), avgPremium: %s\n", b.Miner, len(msgs.BlsMessages)+len(msgs.SecpkMessages), limitSum, build.BlockGasLimit, 100*float64(limitSum)/float64(build.BlockGasLimit), avgpremium)
 				}
 				if i < len(tss)-1 {
 					msgs, err := api.ChainGetParentMessages(ctx, tss[i+1].Blocks()[0].Cid())
@@ -659,13 +646,13 @@ var ChainListCmd = &cli.Command{
 					gasEfficiency := 100 * float64(gasUsed) / float64(limitSum)
 					gasCapacity := 100 * float64(limitSum) / float64(build.BlockGasLimit)
 
-					afmt.Printf("\ttipset: \t%d msgs, %d (%0.2f%%) / %d (%0.2f%%)\n", len(msgs), gasUsed, gasEfficiency, limitSum, gasCapacity)
+					fmt.Printf("\ttipset: \t%d msgs, %d (%0.2f%%) / %d (%0.2f%%)\n", len(msgs), gasUsed, gasEfficiency, limitSum, gasCapacity)
 				}
-				afmt.Println()
+				fmt.Println()
 			}
 		} else {
 			for i := len(tss) - 1; i >= 0; i-- {
-				printTipSet(cctx.String("format"), tss[i], afmt)
+				printTipSet(cctx.String("format"), tss[i])
 			}
 		}
 		return nil
@@ -720,8 +707,6 @@ var ChainGetCmd = &cli.Command{
    - account-state
 `,
 	Action: func(cctx *cli.Context) error {
-		afmt := NewAppFmt(cctx.App)
-
 		api, closer, err := GetFullNodeAPI(cctx)
 		if err != nil {
 			return err
@@ -740,7 +725,7 @@ var ChainGetCmd = &cli.Command{
 
 			p = "/ipfs/" + ts.ParentState().String() + p
 			if cctx.Bool("verbose") {
-				afmt.Println(p)
+				fmt.Println(p)
 			}
 		}
 
@@ -755,7 +740,7 @@ var ChainGetCmd = &cli.Command{
 			if err != nil {
 				return err
 			}
-			afmt.Println(string(b))
+			fmt.Println(string(b))
 			return nil
 		}
 
@@ -797,7 +782,7 @@ var ChainGetCmd = &cli.Command{
 		}
 
 		if cbu == nil {
-			afmt.Printf("%x", raw)
+			fmt.Printf("%x", raw)
 			return nil
 		}
 
@@ -809,7 +794,7 @@ var ChainGetCmd = &cli.Command{
 		if err != nil {
 			return err
 		}
-		afmt.Println(string(b))
+		fmt.Println(string(b))
 		return nil
 	},
 }
@@ -893,7 +878,7 @@ func handleHamtAddress(ctx context.Context, api v0api.FullNode, r cid.Cid) error
 	})
 }
 
-func printTipSet(format string, ts *types.TipSet, afmt *AppFmt) {
+func printTipSet(format string, ts *types.TipSet) {
 	format = strings.ReplaceAll(format, "<height>", fmt.Sprint(ts.Height()))
 	format = strings.ReplaceAll(format, "<time>", time.Unix(int64(ts.MinTimestamp()), 0).Format(time.Stamp))
 	blks := "[ "
@@ -912,7 +897,7 @@ func printTipSet(format string, ts *types.TipSet, afmt *AppFmt) {
 	format = strings.ReplaceAll(format, "<blocks>", blks)
 	format = strings.ReplaceAll(format, "<weight>", fmt.Sprint(ts.Blocks()[0].ParentWeight))
 
-	afmt.Println(format)
+	fmt.Println(format)
 }
 
 var ChainBisectCmd = &cli.Command{
@@ -933,8 +918,6 @@ var ChainBisectCmd = &cli.Command{
    For special path elements see 'chain get' help
 `,
 	Action: func(cctx *cli.Context) error {
-		afmt := NewAppFmt(cctx.App)
-
 		api, closer, err := GetFullNodeAPI(cctx)
 		if err != nil {
 			return err
@@ -978,7 +961,7 @@ var ChainBisectCmd = &cli.Command{
 			}
 
 			path := "/ipld/" + midTs.ParentState().String() + "/" + subPath
-			afmt.Printf("* Testing %d (%d - %d) (%s): ", mid, start, end, path)
+			fmt.Printf("* Testing %d (%d - %d) (%s): ", mid, start, end, path)
 
 			nd, err := api.ChainGetNode(ctx, path)
 			if err != nil {
@@ -1005,32 +988,32 @@ var ChainBisectCmd = &cli.Command{
 				if strings.TrimSpace(out.String()) != "false" {
 					end = mid
 					highest = midTs
-					afmt.Println("true")
+					fmt.Println("true")
 				} else {
 					start = mid
-					afmt.Printf("false (cli)\n")
+					fmt.Printf("false (cli)\n")
 				}
 			case *exec.ExitError:
 				if len(serr.String()) > 0 {
-					afmt.Println("error")
+					fmt.Println("error")
 
-					afmt.Printf("> Command: %s\n---->\n", strings.Join(cctx.Args().Slice()[3:], " "))
-					afmt.Println(string(b))
-					afmt.Println("<----")
+					fmt.Printf("> Command: %s\n---->\n", strings.Join(cctx.Args().Slice()[3:], " "))
+					fmt.Println(string(b))
+					fmt.Println("<----")
 					return xerrors.Errorf("error running bisect check: %s", serr.String())
 				}
 
 				start = mid
-				afmt.Println("false")
+				fmt.Println("false")
 			default:
 				return err
 			}
 
 			if start == end {
 				if strings.TrimSpace(out.String()) == "true" {
-					afmt.Println(midTs.Height())
+					fmt.Println(midTs.Height())
 				} else {
-					afmt.Println(prev)
+					fmt.Println(prev)
 				}
 				return nil
 			}
@@ -1075,7 +1058,7 @@ var ChainExportCmd = &cli.Command{
 			return fmt.Errorf("\"recent-stateroots\" has to be greater than %d", build.Finality)
 		}
 
-		fi, err := createExportFile(cctx.App, cctx.Args().First())
+		fi, err := os.Create(cctx.Args().First())
 		if err != nil {
 			return err
 		}
@@ -1135,8 +1118,6 @@ var SlashConsensusFault = &cli.Command{
 		},
 	},
 	Action: func(cctx *cli.Context) error {
-		afmt := NewAppFmt(cctx.App)
-
 		srv, err := GetFullNodeServices(cctx)
 		if err != nil {
 			return err
@@ -1241,7 +1222,7 @@ var SlashConsensusFault = &cli.Command{
 			return err
 		}
 
-		afmt.Println(smsg.Cid())
+		fmt.Println(smsg.Cid())
 
 		return nil
 	},
@@ -1251,8 +1232,6 @@ var ChainGasPriceCmd = &cli.Command{
 	Name:  "gas-price",
 	Usage: "Estimate gas prices",
 	Action: func(cctx *cli.Context) error {
-		afmt := NewAppFmt(cctx.App)
-
 		api, closer, err := GetFullNodeAPI(cctx)
 		if err != nil {
 			return err
@@ -1269,7 +1248,7 @@ var ChainGasPriceCmd = &cli.Command{
 				return err
 			}
 
-			afmt.Printf("%d blocks: %s (%s)\n", nblocks, est, types.FIL(est))
+			fmt.Printf("%d blocks: %s (%s)\n", nblocks, est, types.FIL(est))
 		}
 
 		return nil
@@ -1299,8 +1278,6 @@ var chainDecodeParamsCmd = &cli.Command{
 		},
 	},
 	Action: func(cctx *cli.Context) error {
-		afmt := NewAppFmt(cctx.App)
-
 		api, closer, err := GetFullNodeAPI(cctx)
 		if err != nil {
 			return err
@@ -1352,7 +1329,7 @@ var chainDecodeParamsCmd = &cli.Command{
 			return err
 		}
 
-		afmt.Println(pstr)
+		fmt.Println(pstr)
 
 		return nil
 	},
@@ -1385,8 +1362,6 @@ var chainEncodeParamsCmd = &cli.Command{
 		},
 	},
 	Action: func(cctx *cli.Context) error {
-		afmt := NewAppFmt(cctx.App)
-
 		if cctx.Args().Len() != 3 {
 			return ShowHelp(cctx, fmt.Errorf("incorrect number of arguments"))
 		}
@@ -1435,26 +1410,13 @@ var chainEncodeParamsCmd = &cli.Command{
 
 		switch cctx.String("encoding") {
 		case "base64", "b64":
-			afmt.Println(base64.StdEncoding.EncodeToString(p))
+			fmt.Println(base64.StdEncoding.EncodeToString(p))
 		case "hex":
-			afmt.Println(hex.EncodeToString(p))
+			fmt.Println(hex.EncodeToString(p))
 		default:
 			return xerrors.Errorf("unknown encoding")
 		}
 
 		return nil
 	},
-}
-
-// createExportFile returns the export file handle from the app metadata, or creates a new file if it doesn't exist
-func createExportFile(app *cli.App, path string) (io.WriteCloser, error) {
-	if wc, ok := app.Metadata["export-file"]; ok {
-		return wc.(io.WriteCloser), nil
-	}
-
-	fi, err := os.Create(path)
-	if err != nil {
-		return nil, err
-	}
-	return fi, nil
 }

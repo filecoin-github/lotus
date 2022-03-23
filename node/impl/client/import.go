@@ -1,4 +1,4 @@
-package unixfs
+package client
 
 import (
 	"context"
@@ -19,15 +19,12 @@ import (
 	"github.com/ipfs/go-merkledag"
 	"github.com/ipfs/go-unixfs/importer/balanced"
 	ihelper "github.com/ipfs/go-unixfs/importer/helpers"
-	mh "github.com/multiformats/go-multihash"
 	"golang.org/x/xerrors"
 
 	"github.com/filecoin-project/lotus/build"
 )
 
-var DefaultHashFunction = uint64(mh.BLAKE2B_MIN + 31)
-
-func CidBuilder() (cid.Builder, error) {
+func unixFSCidBuilder() (cid.Builder, error) {
 	prefix, err := merkledag.PrefixForCidVersion(1)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize UnixFS CID Builder: %w", err)
@@ -40,9 +37,9 @@ func CidBuilder() (cid.Builder, error) {
 	return b, nil
 }
 
-// CreateFilestore takes a standard file whose path is src, forms a UnixFS DAG, and
+// createUnixFSFilestore takes a standard file whose path is src, forms a UnixFS DAG, and
 // writes a CARv2 file with positional mapping (backed by the go-filestore library).
-func CreateFilestore(ctx context.Context, srcPath string, dstPath string) (cid.Cid, error) {
+func (a *API) createUnixFSFilestore(ctx context.Context, srcPath string, dstPath string) (cid.Cid, error) {
 	// This method uses a two-phase approach with a staging CAR blockstore and
 	// a final CAR blockstore.
 	//
@@ -83,7 +80,7 @@ func CreateFilestore(ctx context.Context, srcPath string, dstPath string) (cid.C
 		return cid.Undef, xerrors.Errorf("failed to create temporary filestore: %w", err)
 	}
 
-	finalRoot1, err := Build(ctx, file, fstore, true)
+	finalRoot1, err := buildUnixFS(ctx, file, fstore, true)
 	if err != nil {
 		_ = fstore.Close()
 		return cid.Undef, xerrors.Errorf("failed to import file to store to compute root: %w", err)
@@ -105,7 +102,7 @@ func CreateFilestore(ctx context.Context, srcPath string, dstPath string) (cid.C
 		return cid.Undef, xerrors.Errorf("failed to rewind file: %w", err)
 	}
 
-	finalRoot2, err := Build(ctx, file, bs, true)
+	finalRoot2, err := buildUnixFS(ctx, file, bs, true)
 	if err != nil {
 		_ = bs.Close()
 		return cid.Undef, xerrors.Errorf("failed to create UnixFS DAG with carv2 blockstore: %w", err)
@@ -122,10 +119,10 @@ func CreateFilestore(ctx context.Context, srcPath string, dstPath string) (cid.C
 	return finalRoot1, nil
 }
 
-// Build builds a UnixFS DAG out of the supplied reader,
+// buildUnixFS builds a UnixFS DAG out of the supplied reader,
 // and imports the DAG into the supplied service.
-func Build(ctx context.Context, reader io.Reader, into bstore.Blockstore, filestore bool) (cid.Cid, error) {
-	b, err := CidBuilder()
+func buildUnixFS(ctx context.Context, reader io.Reader, into bstore.Blockstore, filestore bool) (cid.Cid, error) {
+	b, err := unixFSCidBuilder()
 	if err != nil {
 		return cid.Undef, err
 	}

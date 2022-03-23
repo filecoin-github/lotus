@@ -126,7 +126,7 @@ func infoCmdAct(cctx *cli.Context) error {
 
 	alerts, err := minerApi.LogAlerts(ctx)
 	if err != nil {
-		fmt.Printf("ERROR: getting alerts: %s\n", err)
+		return xerrors.Errorf("getting alerts: %w", err)
 	}
 
 	activeAlerts := make([]alerting.Alert, 0)
@@ -466,7 +466,6 @@ var stateOrder = map[sealing.SectorState]stateMeta{}
 var stateList = []stateMeta{
 	{col: 39, state: "Total"},
 	{col: color.FgGreen, state: sealing.Proving},
-	{col: color.FgGreen, state: sealing.Available},
 	{col: color.FgGreen, state: sealing.UpdateActivating},
 
 	{col: color.FgBlue, state: sealing.Empty},

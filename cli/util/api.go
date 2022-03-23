@@ -28,6 +28,63 @@ const (
 	metadataTraceContext = "traceContext"
 )
 
+// flagsForAPI returns flags passed on the command line with the listen address
+// of the API server (only used by the tests), in the order of precedence they
+// should be applied for the requested kind of node.
+func flagsForAPI(t repo.RepoType) []string {
+	switch t {
+	case repo.FullNode:
+		return []string{"api-url"}
+	case repo.StorageMiner:
+		return []string{"miner-api-url"}
+	case repo.Worker:
+		return []string{"worker-api-url"}
+	case repo.Markets:
+		// support split markets-miner and monolith deployments.
+		return []string{"markets-api-url", "miner-api-url"}
+	default:
+		panic(fmt.Sprintf("Unknown repo type: %v", t))
+	}
+}
+
+func flagsForRepo(t repo.RepoType) []string {
+	switch t {
+	case repo.FullNode:
+		return []string{"repo"}
+	case repo.StorageMiner:
+		return []string{"miner-repo"}
+	case repo.Worker:
+		return []string{"worker-repo"}
+	case repo.Markets:
+		// support split markets-miner and monolith deployments.
+		return []string{"markets-repo", "miner-repo"}
+	default:
+		panic(fmt.Sprintf("Unknown repo type: %v", t))
+	}
+}
+
+// EnvsForAPIInfos returns the environment variables to use in order of precedence
+// to determine the API endpoint of the specified node type.
+//
+// It returns the current variables and deprecated ones separately, so that
+// the user can log a warning when deprecated ones are found to be in use.
+func EnvsForAPIInfos(t repo.RepoType) (primary string, fallbacks []string, deprecated []string) {
+	switch t {
+	case repo.FullNode:
+		return "FULLNODE_API_INFO", nil, nil
+	case repo.StorageMiner:
+		// TODO remove deprecated deprecation period
+		return "MINER_API_INFO", nil, []string{"STORAGE_API_INFO"}
+	case repo.Worker:
+		return "WORKER_API_INFO", nil, nil
+	case repo.Markets:
+		// support split markets-miner and monolith deployments.
+		return "MARKETS_API_INFO", []string{"MINER_API_INFO"}, nil
+	default:
+		panic(fmt.Sprintf("Unknown repo type: %v", t))
+	}
+}
+
 // GetAPIInfo returns the API endpoint to use for the specified kind of repo.
 //
 // The order of precedence is as follows:
@@ -39,7 +96,8 @@ const (
 func GetAPIInfo(ctx *cli.Context, t repo.RepoType) (APIInfo, error) {
 	// Check if there was a flag passed with the listen address of the API
 	// server (only used by the tests)
-	for _, f := range t.APIFlags() {
+	apiFlags := flagsForAPI(t)
+	for _, f := range apiFlags {
 		if !ctx.IsSet(f) {
 			continue
 		}
@@ -53,7 +111,7 @@ func GetAPIInfo(ctx *cli.Context, t repo.RepoType) (APIInfo, error) {
 	// Note: it is not correct/intuitive to prefer environment variables over
 	// CLI flags (repo flags below).
 	//
-	primaryEnv, fallbacksEnvs, deprecatedEnvs := t.APIInfoEnvVars()
+	primaryEnv, fallbacksEnvs, deprecatedEnvs := EnvsForAPIInfos(t)
 	env, ok := os.LookupEnv(primaryEnv)
 	if ok {
 		return ParseApiInfo(env), nil
@@ -67,7 +125,8 @@ func GetAPIInfo(ctx *cli.Context, t repo.RepoType) (APIInfo, error) {
 		}
 	}
 
-	for _, f := range t.RepoFlags() {
+	repoFlags := flagsForRepo(t)
+	for _, f := range repoFlags {
 		// cannot use ctx.IsSet because it ignores default values
 		path := ctx.String(f)
 		if path == "" {
@@ -116,13 +175,13 @@ func GetAPIInfo(ctx *cli.Context, t repo.RepoType) (APIInfo, error) {
 		}
 	}
 
-	return APIInfo{}, fmt.Errorf("could not determine API endpoint for node type: %v", t.Type())
+	return APIInfo{}, fmt.Errorf("could not determine API endpoint for node type: %v", t)
 }
 
 func GetRawAPI(ctx *cli.Context, t repo.RepoType, version string) (string, http.Header, error) {
 	ainfo, err := GetAPIInfo(ctx, t)
 	if err != nil {
-		return "", nil, xerrors.Errorf("could not get API info for %s: %w", t.Type(), err)
+		return "", nil, xerrors.Errorf("could not get API info for %s: %w", t, err)
 	}
 
 	addr, err := ainfo.DialArgs(version)
@@ -164,11 +223,6 @@ func GetCommonAPI(ctx *cli.Context) (api.CommonNet, jsonrpc.ClientCloser, error)
 }
 
 func GetFullNodeAPI(ctx *cli.Context) (v0api.FullNode, jsonrpc.ClientCloser, error) {
-	// use the mocked API in CLI unit tests, see cli/mocks_test.go for mock definition
-	if mock, ok := ctx.App.Metadata["test-full-api"]; ok {
-		return &v0api.WrapperV1Full{FullNode: mock.(v1api.FullNode)}, func() {}, nil
-	}
-
 	if tn, ok := ctx.App.Metadata["testnode-full"]; ok {
 		return &v0api.WrapperV1Full{FullNode: tn.(v1api.FullNode)}, func() {}, nil
 	}

@@ -1,4 +1,3 @@
-//stm: @unit
 package dagstore
 
 import (
@@ -18,8 +17,6 @@ import (
 )
 
 func TestLotusMount(t *testing.T) {
-	//stm: @MARKET_DAGSTORE_FETCH_UNSEALED_PIECE_001, @MARKET_DAGSTORE_GET_UNPADDED_CAR_SIZE_001
-	//stm: @MARKET_DAGSTORE_IS_PIECE_UNSEALED_001
 	ctx := context.Background()
 	bgen := blocksutil.NewBlockGenerator()
 	cid := bgen.Next().Cid()
@@ -91,7 +88,6 @@ func TestLotusMount(t *testing.T) {
 }
 
 func TestLotusMountDeserialize(t *testing.T) {
-	//stm: @MARKET_DAGSTORE_DESERIALIZE_CID_001
 	api := &minerAPI{}
 
 	bgen := blocksutil.NewBlockGenerator()
@@ -119,8 +115,6 @@ func TestLotusMountDeserialize(t *testing.T) {
 }
 
 func TestLotusMountRegistration(t *testing.T) {
-	//stm: @MARKET_DAGSTORE_FETCH_UNSEALED_PIECE_001, @MARKET_DAGSTORE_GET_UNPADDED_CAR_SIZE_001
-	//stm: @MARKET_DAGSTORE_IS_PIECE_UNSEALED_001
 	ctx := context.Background()
 	bgen := blocksutil.NewBlockGenerator()
 	cid := bgen.Next().Cid()

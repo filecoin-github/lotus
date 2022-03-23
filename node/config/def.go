@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding"
-
 	"os"
 	"strconv"
 	"time"
@@ -46,11 +45,6 @@ func defCommon() Common {
 		API: API{
 			ListenAddress: "/ip4/127.0.0.1/tcp/1234/http",
 			Timeout:       Duration(30 * time.Second),
-		},
-		Logging: Logging{
-			SubsystemLevels: map[string]string{
-				"example-subsystem": "INFO",
-			},
 		},
 		Libp2p: Libp2p{
 			ListenAddresses: []string{
@@ -188,14 +182,6 @@ func DefaultStorageMiner() *StorageMiner {
 			},
 		},
 
-		IndexProvider: IndexProviderConfig{
-			Enable:               false,
-			EntriesCacheCapacity: 1024,
-			EntriesChunkSize:     16384,
-			TopicName:            "/indexer/ingest/mainnet",
-			PurgeCacheOnStart:    false,
-		},
-
 		Subsystems: MinerSubsystemConfig{
 			EnableMining:        true,
 			EnableSealing:       true,
@@ -236,7 +222,6 @@ func DefaultStorageMiner() *StorageMiner {
 			GCInterval:                 Duration(1 * time.Minute),
 		},
 	}
-
 	cfg.Common.API.ListenAddress = "/ip4/127.0.0.1/tcp/2345/http"
 	cfg.Common.API.RemoteListenAddress = "127.0.0.1:2345"
 	return cfg
